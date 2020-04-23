@@ -12,8 +12,8 @@ server to Kubernetes using BentoML.
 ## Setup
 
 1. A Kubernetes enabled cluster or machine.
-    * learn more about installation: https://kubernetes.io/docs/setup/
-    * This guide uses Kubernetes' recommend learning environment `minikube`.
+    * learn more about kubernetes installation: https://kubernetes.io/docs/setup/
+    * This guide uses Kubernetes' recommend learning environment, `minikube`.
     `minikube` installation: https://kubernetes.io/docs/setup/learning-environment/minikube/
     * `kubectl` CLI tool: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 2. Docker and Docker Hub is properly installed and configured on your local system
@@ -91,7 +91,7 @@ BentoML automatically process the incoming data into required data format define
 API. For the pet classifier BentoService defined above, incoming data will transform to
 fastai `ImageData` object.
 
-Use BentoML CLI tool to
+Make prediction request with sample data using BentoML CLI:
 
 ```bash
 # Replace PATH_TO_TEST_IMAGE_FILE with one of the image from {path_img}
@@ -113,7 +113,7 @@ Replace `docker_username` with Docker Hub username:
 saved_path=$(bentoml get IrisClassifier:latest -q | jq -r ".uri.uri")
 
 docker build -t {docker_username}/pet-classifier .
-docker push
+docker push {docker_username}/pet-classifier
 ```
 
 ### Apply deployment to Kubernetes
@@ -170,20 +170,29 @@ Check deployment status with `kubectl`:
 
 ```bash
 kubectl get svc pet-classifier
+```
 
 ### Send prediction request
 
+Replace `EXTERNAL_IP` with Kubernetes cluster IP. For this guide, to get external IP
+use `minikube` command:
+
+```bash
+minikube ip
+```
+
+Make prediction request with `curl`:
+
 ```bash
 # Replace PATH_TO_TEST_IMAGE_FILE
-
 curl -i \
     --request POST \
     --header "Content-Type: multipart/form-data" \
     -F "image=@PATH_TOTEST_IMAGE_FILE" \
-    localhost:5000/predict
+    EXTERNAL_IP:5000/predict
 ```
 
-### Remote deployment
+### Delete deployment from Kubernetes cluster
 
 ```bash
 kubectl delete -f pet-classifier.yaml

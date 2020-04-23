@@ -63,15 +63,15 @@ class PetClassification(BentoService):
         return str(result)
 ```
 
-This code defines a prediction server using `Fastai` model, asks BentoML to figure out
-the required PyPi packages automatically. It also defined an API called `predict`, that
-is the entry point to access this prediction service. The API is expecting a `Fastai`
+This code defines a model server using `Fastai` model, asks BentoML to figure out
+the required PyPi packages automatically. It also defines an API called `predict`, that
+is the entry point to access this model server. The API expects a `Fastai`
 `ImageData` object as its input data.
 
 Run the following code to create a BentoService SavedBundle with the pet classification
-model. It's a versioned file archive ready for production deployment.  The archive
-contains the prediction service defined above, python code dependencies and PyPi
-dependencies, and the trained pet classification model. :
+model. It's a versioned file archive ready for production deployment. The archive
+contains the model service defined above, python code dependencies and PyPi
+dependencies, and the trained pet classification model:
 
 ```python
 # 1) import the custom BentoService defined above

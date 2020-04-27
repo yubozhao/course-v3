@@ -23,8 +23,8 @@ API server to a Kubernetes cluster using BentoML.
 2. Docker and Docker Hub is properly installed and configured on your local system
     * Docker installation instruction: https://www.docker.com/get-started
     * Docker Hub: https://hub.docker.com
-3. Python (3.6 or above) and required packages: `bentoml`, `fastai`
-    * ```pip install bentoml fastai```
+3. Python (3.6 or above) and required packages: `bentoml`, `fastai`, `torch`, and `torchvision`
+    * ```pip install bentoml fastai==1.0.57 torch==1.4.0 torchvision=0.5.0```
 
 ## Build model API server with BentoML
 
@@ -36,10 +36,18 @@ from fastai.vision import *
 path = untar_data(URLs.PETS)
 path_img = path/'images'
 fnames = get_image_files(path_img)
-pat = re.compile(r'/([^/]+)_\d+.jpg$')
 bs=64
-data = ImageDataBunch.from_name_re(path_img, fnames, pat, ds_tfms=get_transforms(),
-                                   size=299, bs=bs//2).normalize(imagenet_stats)
+np.random.seed(2)
+pat = r'/([^/]+)_\d+.jpg$'
+data = ImageDataBunch.from_name_re(
+    path_img,
+    fnames,
+    pat,
+    num_workers=0,
+    ds_tfms=get_transforms(),
+    size=224,
+    bs=bs
+).normalize(imagenet_stats)
 learn = create_cnn(data, models.resnet50, metrics=error_rate)
 learn.fit_one_cycle(8)
 learn.unfreeze()
@@ -86,18 +94,17 @@ service.pack('pet_classifier', learn)
 # Save the prediction service to disk for model serving
 service.save()
 ```
-
-BentoML automatically process the incoming data into required data format defined in the
-API. For the pet classifier BentoService defined above, incoming data will transform to
-fastai `ImageData` object.
-
 Use BentoML CLI to start a local API model server:
 
 ```bash
 bentoml serve PetClassification:latest
 ```
 
-Make `curl` request in another terminal to get the prediction result:
+BentoML automatically process the incoming data into required data format defined in the
+API. For the pet classifier BentoService defined above, incoming data will transform to
+fastai `ImageData` object.
+
+Use `curl` request in another terminal to get the prediction result:
 
 ```bash
 # Replace PATH_TO_TEST_IMAGE_FILE with one of the image from {path_img}
@@ -136,9 +143,9 @@ In another terminal window, use the `curl` command from above to get the predict
 
 ### Deploy to Kubernetes
 
-The following code creates a kubernetes resources spec. Replace `{docker_username}`
-with your Docker Hub username and save to a file called
-`pet-classifier.yaml`:
+The following is an example YAML file for specifying the resources required to run and
+expose a BentoML model server in a Kubernetes cluster. Replace `{docker_username}` with
+your Docker Hub username and save it to `pet-classifier.yaml` file:
 
 ```yaml
 apiVersion: v1
